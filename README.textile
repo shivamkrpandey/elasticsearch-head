@@ -83,7 +83,7 @@ You will also need to add @http.cors.allow-headers: Authorization@ to the elasti
 
 h4. Token or JWT Authentication
 
-elasticsearch-head will add token headers to each request if you pass token in the input text box besides URL.
+elasticsearch-head will add token in headers of each request if you pass token in the input text box besides URL.
 It sends each request with header in the format "Authorization: Bearer ${token}".
 
 h4. x-pack
