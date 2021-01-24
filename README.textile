@@ -1,5 +1,5 @@
-h1. elasticsearch-head
-
+h1. elasticsearch-head - Bearer and Basic Authentication
+ 
 h2. A web front end for an Elasticsearch cluster
 
 h3. "http://mobz.github.io/elasticsearch-head":http://mobz.github.io/elasticsearch-head
