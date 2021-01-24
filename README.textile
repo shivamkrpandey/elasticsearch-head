@@ -81,6 +81,11 @@ h4. Basic Authentication
 elasticsearch-head will add basic auth headers to each request if you pass in the "correct url parameters":#url-parameters
 You will also need to add @http.cors.allow-headers: Authorization@ to the elasticsearch configuration
 
+h4. Token or JWT Authentication
+
+elasticsearch-head will add token headers to each request if you pass token in the input text box besides URL.
+It sends each request with header in the format "Authorization: Bearer ${token}".
+
 h4. x-pack
 
 elasticsearch x-pack requires basic authentication _and_ CORS as described above. Make sure you have the correct CORS setup and then open es-head with a url like "http://localhost:9100/?auth_user=elastic&auth_password=changeme"
