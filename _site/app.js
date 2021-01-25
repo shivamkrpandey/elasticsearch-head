@@ -3790,44 +3790,61 @@
 			this.cluster.get( "", this._node_handler );
 		},
 
-		_node_handler: function(data) {
-			if(data) {
+		_node_handler: function (data) {
+			if (data) {
 				this.prefs.set("app-base_uri", this.cluster.base_uri);
-				if(data.version && data.version.number)
+				if (data.version && data.version.number)
 					this.cluster.setVersion(data.version.number);
+				if (this.cluster.token)
+					this.prefs.set("token", this.cluster.token);
 			}
 		},
 
-		_reconnect_handler: function() {
+		_reconnect_handler: function () {
 			var base_uri = this.el.find(".uiClusterConnect-uri").val();
 			var url;
-			if(base_uri.indexOf("?") !== -1) {
-				url = base_uri.substring(0, base_uri.indexOf("?")-1);
+			if (base_uri.indexOf("?") !== -1) {
+				url = base_uri.substring(0, base_uri.indexOf("?") - 1);
 			} else {
 				url = base_uri;
 			}
-			var argstr = base_uri.substring(base_uri.indexOf("?")+1, base_uri.length);
-			var args = argstr.split("&").reduce(function(r, p) {
+
+			var token = this.el.find(".uiClusterConnect-token").val();;
+			if (token.length === 0) {
+				token = null;
+			}
+			var argstr = base_uri.substring(base_uri.indexOf("?") + 1, base_uri.length);
+			var args = argstr.split("&").reduce(function (r, p) {
 				r[decodeURIComponent(p.split("=")[0])] = decodeURIComponent(p.split("=")[1]);
 				return r;
 			}, {});
-			$("body").empty().append(new app.App("body", { id: "es",
+			$("body").empty().append(new app.App("body", {
+				id: "es",
+				token: token,
 				base_uri: url,
-			 	auth_user : args["auth_user"] || "",
-			 	auth_password : args["auth_password"] || ""
+				auth_user: args["auth_user"] || "",
+				auth_password: args["auth_password"] || ""
 			}));
 		},
 
-		_main_template: function() {
-			return { tag: "SPAN", cls: "uiClusterConnect", children: [
-				{ tag: "INPUT", type: "text", cls: "uiClusterConnect-uri", onkeyup: function( ev ) {
-					if(ev.which === 13) {
-						ev.preventDefault();
-						this._reconnect_handler();
-					}
-				}.bind(this), id: this.id("baseUri"), value: this.cluster.base_uri },
-				{ tag: "BUTTON", type: "button", text: i18n.text("Header.Connect"), onclick: this._reconnect_handler }
-			]};
+		_main_template: function () {
+			return {
+				tag: "SPAN", cls: "uiClusterConnect", children: [
+					{
+						tag: "INPUT", type: "text", cls: "uiClusterConnect-uri", onkeyup: function (ev) {
+							if (ev.which === 13) {
+								ev.preventDefault();
+								this._reconnect_handler();
+							}
+						}.bind(this), id: this.id("baseUri"), value: this.cluster.base_uri
+					},
+					{
+						tag: "INPUT", type: "text", placeholder: "Authorization token", cls: "uiClusterConnect-token", onkeyup: function (ev) {
+						}.bind(this), id: this.id("token"), value: this.cluster.token
+					},
+					{ tag: "BUTTON", type: "button", text: i18n.text("Header.Connect"), onclick: this._reconnect_handler }
+				]
+			};
 		}
 	});
 
@@ -4390,8 +4407,18 @@
 				// XHR request fails if the URL is not ending with a "/"
 				this.base_uri += "/";
 			}
-			if( this.config.auth_user ) {
-				var credentials = window.btoa( this.config.auth_user + ":" + this.config.auth_password );
+			this.token = this.config.token || this.prefs.get("token") || 'Basic Authentication';
+			this.authType = this.token && this.token.indexOf('Basic') !== -1 ? 'Basic' : 'Bearer';
+			if (this.authType === "Bearer") {
+				console.log("Authenticating the head using the token...");
+				$.ajaxSetup({
+					headers: {
+						"Authorization": "Bearer " + this.token
+					}
+				});
+			} else {
+				console.log("Authenticating the head using the Basic, username and password...");
+				var credentials = window.btoa(this.config.auth_user + ":" + this.config.auth_password);
 				$.ajaxSetup({
 					headers: {
 						"Authorization": "Basic " + credentials
@@ -4399,6 +4426,7 @@
 				});
 			}
 			this.cluster = new services.Cluster({ base_uri: this.base_uri });
+			this.cluster.token = this.token;
 			this._clusterState = new services.ClusterState({
 				cluster: this.cluster
 			});
